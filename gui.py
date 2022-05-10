@@ -31,7 +31,7 @@ class GUI:
         buttons = [tk.Button(mode_frame, text=txt, command=cmd) for txt, cmd in zip(button_names, button_commands)]
         for index, button in enumerate(buttons):
             button.grid(column=0, row=index, sticky='W')
-            button.configure(width=25)
+            button.configure(width=30)
         self.buttons = buttons[:3]
         self.set_mode(state.mode.value)
 
@@ -56,7 +56,7 @@ class GUI:
         ttk.Button(path_frame, text="Capturar", command=state.capture_action).grid(column=0, row=3, sticky='SE')
         # Add text below the button
         self.text = ttk.Label(path_frame, text=self.state.text)
-        self.text.grid(column=1, row=4, sticky='SW')
+        self.text.grid(column=0, row=4, columnspan=2, sticky='SWE')
 
         # Image
         self.image = None
@@ -76,6 +76,11 @@ class GUI:
         self.state.update()
 
         self.text.configure(text=self.state.text)
+        if len(self.state.text) > 2 and self.state.text[-1] == '\0':
+            if self.state.text[-2] == '\0':
+                self.state.text = self.state.text[:-1]
+            else:
+                self.state.text = ''
 
         if self.state.image_updated:
             self.state.image_updated = False

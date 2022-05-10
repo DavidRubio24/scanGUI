@@ -80,7 +80,7 @@ class State:
         if self.mode == mode:
             big_id = utils.increase_name(self.gui.big_id.get())
         else:
-            big_id = ['TEN_0000-', 'CALIB_', 'CHECK_'][mode.value]
+            big_id = ['TEN_0000', 'CALIB_', 'CHECK_'][mode.value]
             big_id += time.strftime("%Y%m%d%H%M%S", time.localtime()) if mode.value else ''
         self.gui.big_id.set(big_id)
         self.gui.little_id.set('M1' if mode == Mode.CAPTURE else '0')
@@ -112,7 +112,7 @@ class State:
                 filepath = os.path.join(path_id, f'{big_id}-{little_id}({i}).png')
                 i += 1
         cv2.imwrite(filepath, self.image)
-        self.text = f'Capturado en:\n{filepath}'
+        self.text = f"Capturado en:\n{path_id}\n{filepath[len(path_id):]}" + '\0' * 30
 
         if self.mode == Mode.CALIBRATE:
             calibration = self.calibrations.get(big_id, Calibration())

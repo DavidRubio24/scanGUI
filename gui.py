@@ -63,25 +63,31 @@ class GUI:
         self.image_label = ttk.Label(self.mainframe)
         self.image_label.grid(row=0, column=1)
 
+        # Actions on close and intro.
         self.root.protocol("WM_DELETE_WINDOW", self.__del__)
         self.root.bind("<Return>", state.capture_action)
 
         self.update()
         self.root.after(10, self.update)
-        self.root.after(1000, self.state.lights.on)
+        self.root.after(1000, self.state.lights.on)  # It doesn't work if done inmediately. ¯\_(ツ)_/¯
         if loop:
             self.root.mainloop()
 
     def update(self, period=10, update_state=True):
+        """Updates the state and, afterwads, the GUI."""
         self.state.update()
 
         self.text.configure(text=self.state.text)
+        # Okay, bear with me. So, self.state.capture_action adds a bunch of '\0' to the end of the string.
+        # Every time that we update the GUI we remove one o them. When all of them are removed, we remove the text.
+        # This is basically a timer to remove the text. A poorly implemented one, I know.
         if len(self.state.text) > 2 and self.state.text[-1] == '\0':
             if self.state.text[-2] == '\0':
                 self.state.text = self.state.text[:-1]
             else:
                 self.state.text = ''
 
+        # Only when the state modifys the image do we update it in the GUI.
         if self.state.image_updated:
             self.state.image_updated = False
             self.image = ImageTk.PhotoImage(Image.fromarray(self.state.get_image()[..., ::-1]))
@@ -96,7 +102,7 @@ class GUI:
         del self.state
 
     def set_mode(self, value: int):
+        """Color the buttons according to the mode. Blue for the current one, grey for the others."""
         for index, button in enumerate(self.buttons):
             color = 'blue' if index == value else 'gray'
             button.configure(bg=color)
-

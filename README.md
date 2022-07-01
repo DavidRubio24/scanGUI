@@ -39,7 +39,7 @@ Por defecto hay una calibración bastante buena.
 Si lo detecta se muestra el error en milímetros obtenido tras aplicar la última calibración.
 Aquí el error mide cuanto se desvían las esquinas del patrón de una situación ideal en la que estén equiespaciadas.
 
-Al cambiar el modo se cambia la serie (aumentando le número de 4 cibras o actualizando la fecha y hora)
+Al cambiar el modo se cambia la serie (aumentando le número de 4 cifras o actualizando la fecha y hora)
 y se resetea el número de captura.
 
 IMPORTANTE: en lado del portatatil en el que se conectan la cámara y luces no hay que conectar nada más,

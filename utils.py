@@ -17,9 +17,7 @@ def chose_name(name, path='./'):
 
 
 def increase_name(name):
-    """
-    Increase the digits in a name.
-    """
+    """Increase the digits in a name."""
     # Increase the least significant digit within the name
     for i in range(len(name) - 1, -2, -1):
         if i == -1:
@@ -37,6 +35,7 @@ def increase_name(name):
 
 
 def open_image(image, copy=True):
+    """Takes care of opening an image in various formats: np.ndarray, path, VideoCapture."""
     if isinstance(image, cv2.VideoCapture):
         return image.read()[1]
     elif isinstance(image, np.ndarray):

@@ -30,7 +30,7 @@ class State:
         self.mode = Mode.CAPTURE
         self.image_size = (480, 640)
         self.image = None
-        self.image_updated = True
+        self.image_updated = True  # When True, the GUI needs to be updated
         self.text = ''
 
     def zoom_out(self):
@@ -46,6 +46,7 @@ class State:
         self.image_updated = True
 
     def update(self):
+        """Ask for a new image from the camera and rotate it for the GUI."""
         success, image = self.cam.read()
         if not success or image is None or not np.any(image):
             return
@@ -54,17 +55,21 @@ class State:
         self.image_updated = True
 
     def get_image(self):
+        """Returns the image to be displayed in the GUI."""
         if self.image is None:
+            # There is no image, so return the wait image message.
             if IMAGE_WAIT.shape[:2] != self.image_size:
                 return cv2.resize(IMAGE_WAIT, self.image_size)
             return IMAGE_WAIT
         image = cv2.resize(self.image, self.image_size)
         if self.mode == Mode.CAPTURE:
+            # Draw a line in the middle for reference
             cv2.line(image,
                      (int(self.image_size[0] * .49), 0),
                      (int(self.image_size[0] * .51), self.image_size[1]),
                      (255, 30, 30), 2)
         elif self.mode == Mode.CALIBRATE:
+            # Draw points over the calibration pattern.
             color = (0, 0, 255)
             r = 1
             for points in list(self.calibrations.values())[-1].points[::-1]:
@@ -101,15 +106,17 @@ class State:
         self.text = 'Captura el patrón de comprobación de 36x54.'
 
     def capture_action(self, *_):
+        """Save the image to the destination directory."""
         path_id = self.gui.path_id.get()
         big_id = self.gui.big_id.get()
         little_id = self.gui.little_id.get()
         if not os.path.isdir(path_id): os.mkdir(path_id)
-        filepath = os.path.join(path_id, f'{big_id}-{little_id}.png')
+        extension = 'png' if self.mode != Mode.CAPTURE else time.strftime("%Y%m%d", time.localtime()) + '.png'
+        filepath = os.path.join(path_id, f'{big_id}-{little_id}.{extension}')
         if os.path.isfile(filepath):
             i = 2
             while os.path.isfile(filepath):
-                filepath = os.path.join(path_id, f'{big_id}-{little_id}({i}).png')
+                filepath = os.path.join(path_id, f'{big_id}-{little_id}({i}).{extension}')
                 i += 1
         cv2.imwrite(filepath, self.image)
         self.text = f"Capturado en:\n{path_id}\n{filepath[len(path_id):]}" + '\0' * 30

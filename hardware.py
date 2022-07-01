@@ -4,16 +4,17 @@ import numpy as np
 
 
 class Lights:
+    """An object to deal with the Arduino controlled lights."""
     def __init__(self, port='COM3', baudrate=57600, timeout=.1):
         port = port if isinstance(port, str) else f'COM{port}'
         self.arduino = serial.Serial(port, baudrate, timeout=timeout)
-        self.turned_on = False  # TODO: This is not necessarily true. It works anyways after a the first interaction.
+        self.turned_on = False  # This is not necessarily true. It works anyway after the first interaction.
         self.__del__ = self.arduino.close
 
     def on(self, intensity=255, duration=255):
         # Duration is in minutes. 255 min == 4h15.
         intensity = int.to_bytes(intensity, 1, 'little') if isinstance(intensity, int) else intensity
-        duration = int.to_bytes(duration, 1, 'little') if isinstance(duration, int) else duration
+        duration  = int.to_bytes(duration,  1, 'little') if isinstance(duration,  int) else duration
 
         self.arduino.write(b'I' + intensity + duration + b' ')
         self.turned_on = True
@@ -49,6 +50,7 @@ def camera(camera_number=0, resolution=(4208, 3120), fourcc='UYVY'):
 
 
 def warm_up(cap, extra_frames=0):
+    """For some reason we need to ask the camera for a few frames bfore it actually starts working."""  # Best camera ever.
     success, image = cap.read()
     i = 1
     cR_ = '\x1B[0;31m'

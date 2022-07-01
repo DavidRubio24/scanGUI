@@ -9,7 +9,7 @@ import config
 def main(*_):
     state = State(hardware.camera(config.cam),
                   hardware.Lights(config.luz))
-    gui = GUI(state, config.directorio_destino)
+    gui = GUI(state, config.directorio_destino, intensity=config.intensidad)
 
 
 if __name__ == '__main__':

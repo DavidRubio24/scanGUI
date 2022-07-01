@@ -6,7 +6,7 @@ from PIL import Image, ImageTk
 
 
 class GUI:
-    def __init__(self, state, path_id='D:/HANDSCANNER_DATA/', loop=True):
+    def __init__(self, state, path_id='D:/HANDSCANNER_DATA/', loop=True, intensity=30):
         state.gui = self
         self.state = state
 
@@ -36,7 +36,7 @@ class GUI:
         self.set_mode(state.mode.value)
 
         # Capture path and name
-        self.intensity = tk.StringVar(value='70')
+        self.intensity = tk.StringVar(value=str(intensity))
         self.path_id   = tk.StringVar(value=path_id)
         self.big_id    = tk.StringVar(value='TEN_0000')
         self.little_id = tk.StringVar(value='M1')

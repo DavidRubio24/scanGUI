@@ -44,3 +44,4 @@ y se resetea el número de captura.
 
 IMPORTANTE: en lado del portatatil en el que se conectan la cámara y luces no hay que conectar nada más,
 la cámara no funcionaría bien. ¯\_(ツ)_/¯
+- Cuando se usan algunos programas potentes como Chrome la imagen se descuadra totalmente. Este problema es muy llamativo cuando ocurre y basta con cerrar scanGUI y abrir.

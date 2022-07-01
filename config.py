@@ -10,4 +10,4 @@ luz = 3
 intensidad = 30 # por ciento
 
 # Carpeta por defecto para guardar las capturas (se puede cambiar cada vez en el programa).
-directorio_destino = 'D:/TENDER_capturas/'
+directorio_destino = 'D:/HANDSCANNER_DATA/'

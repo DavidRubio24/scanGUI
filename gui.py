@@ -26,8 +26,8 @@ class GUI:
         mode_frame.grid(column=0, row=0, sticky='W')
 
         s = self.state
-        button_names    = ['Nuevo usuario', 'Calibración', 'Comprobar calibración', 'Encender luces', 'Apagar luces', 'Zoom +',  'Zoom -',   'Zoom reset']
-        button_commands = [s.new_capture,   s.calibrate,   s.check,     s.lights.on,      s.lights.off,   s.zoom_in, s.zoom_out, s.zoom_reset]
+        button_names    = ['Nuevo usuario', 'Calibración', 'Comprobar calibración', 'Encender luces', 'Apagar luces', 'Zoom +', 'Zoom -', 'Zoom reset']
+        button_commands = [s.new_capture, s.calibrate, s.check, self.lights_on, s.lights.off, s.zoom_in, s.zoom_out, s.zoom_reset]
         buttons = [tk.Button(mode_frame, text=txt, command=cmd) for txt, cmd in zip(button_names, button_commands)]
         for index, button in enumerate(buttons):
             button.grid(column=0, row=index, sticky='W')
@@ -36,27 +36,31 @@ class GUI:
         self.set_mode(state.mode.value)
 
         # Capture path and name
+        self.intensity = tk.StringVar(value='70')
         self.path_id   = tk.StringVar(value=path_id)
         self.big_id    = tk.StringVar(value='TEN_0000')
         self.little_id = tk.StringVar(value='M1')
 
         path_frame = tk.Frame(self.left_frame)
         path_frame.grid(column=0, row=1, sticky='W')
-        ttk.Label(path_frame, text="Carpeta:").            grid(column=0, row=0, sticky='SW')
-        ttk.Label(path_frame, text=path_id).               grid(column=1, row=0, sticky='SW')
-        ttk.Label(path_frame, text="Serie:  ").            grid(column=0, row=1, sticky='SW')
-        ttk.Entry(path_frame, textvariable=self.big_id).   grid(column=1, row=1, sticky='SW')
-        ttk.Label(path_frame, text="Captura:").            grid(column=0, row=2, sticky='SW')
-        ttk.Entry(path_frame, textvariable=self.little_id).grid(column=1, row=2, sticky='SW')
+        ttk.Label(path_frame, text="Iluminación:").        grid(column=0, row=0, sticky='SW')
+        ttk.Entry(path_frame, textvariable=self.intensity).grid(column=1, row=0, sticky='SW')
+        ttk.Label(path_frame, text="%").                   grid(column=2, row=0, sticky='SW')
+        ttk.Label(path_frame, text="Carpeta:").            grid(column=0, row=1, sticky='SW')
+        ttk.Label(path_frame, text=path_id).               grid(column=1, row=1, sticky='SW')
+        ttk.Label(path_frame, text="Serie:  ").            grid(column=0, row=2, sticky='SW')
+        ttk.Entry(path_frame, textvariable=self.big_id).   grid(column=1, row=2, sticky='SW')
+        ttk.Label(path_frame, text="Captura:").            grid(column=0, row=3, sticky='SW')
+        ttk.Entry(path_frame, textvariable=self.little_id).grid(column=1, row=3, sticky='SW')
 
         for key, entry in path_frame.children.items():
             if '!entry' in key:
                 entry.configure(width=28)
 
-        ttk.Button(path_frame, text="Capturar", command=state.capture_action).grid(column=0, row=3, sticky='SE')
+        ttk.Button(path_frame, text="Capturar", command=state.capture_action).grid(column=0, row=4, sticky='SE')
         # Add text below the button
         self.text = ttk.Label(path_frame, text=self.state.text)
-        self.text.grid(column=0, row=4, columnspan=2, sticky='SWE')
+        self.text.grid(column=0, row=5, columnspan=2, sticky='SWE')
 
         # Image
         self.image = None
@@ -72,6 +76,12 @@ class GUI:
         self.root.after(1000, self.state.lights.on)  # It doesn't work if done inmediately. ¯\_(ツ)_/¯
         if loop:
             self.root.mainloop()
+
+    def lights_on(self):
+        intensity = float(self.intensity.get()) * 255 / 100
+        intensity = min(255, intensity)
+        intensity = max(0, intensity)
+        self.state.lights.on(int(intensity))
 
     def update(self, period=10, update_state=True):
         """Updates the state and, afterwads, the GUI."""

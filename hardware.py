@@ -11,7 +11,7 @@ class Lights:
         self.turned_on = False  # This is not necessarily true. It works anyway after the first interaction.
         self.__del__ = self.arduino.close
 
-    def on(self, intensity=255, duration=255):
+    def on(self, intensity=100, duration=255):
         # Duration is in minutes. 255 min == 4h15.
         intensity = int.to_bytes(intensity, 1, 'little') if isinstance(intensity, int) else intensity
         duration  = int.to_bytes(duration,  1, 'little') if isinstance(duration,  int) else duration

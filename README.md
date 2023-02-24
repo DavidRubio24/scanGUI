@@ -46,3 +46,12 @@ y se resetea el número de captura.
 IMPORTANTE: en lado del portatatil en el que se conectan la cámara y luces no hay que conectar nada más,
 la cámara no funcionaría bien. ¯\_(ツ)_/¯
 - Cuando se usan algunos programas potentes como Chrome la imagen se descuadra totalmente. Este problema es muy llamativo cuando ocurre y basta con cerrar scanGUI y abrir.
+
+
+## Actualización
+
+Si git (https://git-scm.com/download/win) está instalado, se puede actualizar clicando en la carpeta actual con el botón derecho y seleccionando "Git Bash Here" o "Abrir en Terminal".
+A continuación se ejecuta el comando "git pull".
+
+Si no está instalado o da error, se puede descargar el archivo zip desde la web https://github.com/DavidRubio24/handmesure/archive/refs/heads/main.zip.
+La carpeta actual se puede sustituir por el contenido del zip.

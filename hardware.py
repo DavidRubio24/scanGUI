@@ -35,7 +35,6 @@ def camera(camera_number=0, resolution=(4208, 3120), fourcc='UYVY'):
     :param resolution: tuple of (width, height) of desired resolution.
                        If it's higher than the max resolution, it will be set to the max resolution.
     :param fourcc: str of four character code for the codec. Either 'UYVY' or 'MJPG'.
-    :param warm_up: If True, it will take some frames until it works.
     :return: OpenCV's VideoCapture object.
     """
     cap = cv2.VideoCapture(camera_number, cv2.CAP_DSHOW)  # This flag allows to configure the camera.

@@ -3,8 +3,9 @@
 Este programa es una interfaz simple para controlar las luces y la cámara del escaner de manos.
 
 ## Instalación
-Hay que tener instalado Python 3 (a poder ser 3.10 o superior).
-Python se puede instalar desde la Windows Store o descargando el instalador de Python desde la web (python.org/downloads/windows). En esta carpeta ya está descargado.
+Hay que tener instalado Python 3.10.
+Python se puede instalar desde la Windows Store o descargando el instalador de Python (64-bits) desde la web (python.org/downloads/windows). En esta carpeta ya está descargado.
+Hay que elgir la opción "Añadir Python al PATH" en el instalador.
 
 Luego, en Símbolo del sistema hay que ejecutar:
 python -m pip install numpy opencv-python pyserial Pillow
@@ -39,7 +40,7 @@ Por defecto hay una calibración bastante buena.
 Si lo detecta se muestra el error en milímetros obtenido tras aplicar la última calibración.
 Aquí el error mide cuanto se desvían las esquinas del patrón de una situación ideal en la que estén equiespaciadas.
 
-Al cambiar el modo se cambia la serie (aumentando le número de 4 cifras o actualizando la fecha y hora)
+Al cambiar el modo se cambia la serie (aumentando el número de 4 cifras o actualizando la fecha y hora)
 y se resetea el número de captura.
 
 IMPORTANTE: en lado del portatatil en el que se conectan la cámara y luces no hay que conectar nada más,

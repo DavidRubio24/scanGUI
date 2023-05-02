@@ -38,7 +38,8 @@ class GUI:
         # Capture path and name
         self.intensity = tk.StringVar(value=str(intensity))
         self.path_id   = tk.StringVar(value=path_id)
-        self.big_id    = tk.StringVar(value='TEN_0000')
+        self.prefix    = tk.StringVar(value='Serie: TEN_')
+        self.big_id    = tk.StringVar(value='')
         self.little_id = tk.StringVar(value='M1')
 
         path_frame = tk.Frame(self.left_frame)
@@ -48,7 +49,7 @@ class GUI:
         ttk.Label(path_frame, text="%").                   grid(column=2, row=0, sticky='SW')
         ttk.Label(path_frame, text="Carpeta:").            grid(column=0, row=1, sticky='SW')
         ttk.Label(path_frame, text=path_id).               grid(column=1, row=1, sticky='SW')
-        ttk.Label(path_frame, text="Serie:  ").            grid(column=0, row=2, sticky='SW')
+        ttk.Label(path_frame, textvariable=self.prefix).   grid(column=0, row=2, sticky='SW')
         ttk.Entry(path_frame, textvariable=self.big_id).   grid(column=1, row=2, sticky='SW')
         ttk.Label(path_frame, text="Captura:").            grid(column=0, row=3, sticky='SW')
         ttk.Entry(path_frame, textvariable=self.little_id).grid(column=1, row=3, sticky='SW')
@@ -58,6 +59,8 @@ class GUI:
                 entry.configure(width=28)
 
         ttk.Button(path_frame, text="Capturar", command=state.capture_action).grid(column=0, row=4, sticky='SE')
+        ttk.Button(path_frame, text="M1", command=lambda: state.capture_action('M1')).grid(column=1, row=4, sticky='SE')
+        ttk.Button(path_frame, text="M2", command=lambda: state.capture_action('M2')).grid(column=1, row=4, sticky='SW')
         # Add text below the button
         self.text = ttk.Label(path_frame, text=self.state.text)
         self.text.grid(column=0, row=5, columnspan=2, sticky='SWE')
@@ -89,7 +92,7 @@ class GUI:
 
         self.text.configure(text=self.state.text)
         # Okay, bear with me. So, self.state.capture_action adds a bunch of '\0' to the end of the string.
-        # Every time that we update the GUI we remove one o them. When all of them are removed, we remove the text.
+        # Every time that we update the GUI, we remove one of them. When all of them are removed, we remove the text.
         # This is basically a timer to remove the text. A poorly implemented one, I know.
         if len(self.state.text) > 2 and self.state.text[-1] == '\0':
             if self.state.text[-2] == '\0':
@@ -97,7 +100,7 @@ class GUI:
             else:
                 self.state.text = ''
 
-        # Only when the state modifys the image do we update it in the GUI.
+        # Only when the state modifys the image, do we update it in the GUI.
         if self.state.image_updated:
             self.state.image_updated = False
             self.image = ImageTk.PhotoImage(Image.fromarray(self.state.get_image()[..., ::-1]))

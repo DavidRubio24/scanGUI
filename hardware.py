@@ -27,6 +27,16 @@ class Lights:
         self.off() if self.turned_on else self.on(intensity, duration)
 
 
+class DummyLights:
+    def __init__(self, *_, **__): pass
+
+    def on(self, *_, **__): pass
+
+    def off(self, *_, **__): pass
+
+    def toggle(self, *_, **__): pass
+
+
 def camera(camera_number=0, resolution=(4208, 3120), fourcc='UYVY'):
     """
     Return a VideoCapture object for the camera.

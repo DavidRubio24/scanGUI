@@ -37,23 +37,34 @@ class DummyLights:
     def toggle(self, *_, **__): pass
 
 
-def camera(camera_number=0, resolution=(4208, 3120), fourcc='UYVY'):
+def camera(camera_number=0, resolution=(4208, 3120), fourcc='UYVY', exposure=-5, gain=0, settings=False):
     """
     Return a VideoCapture object for the camera.
 
     :param camera_number:
-    :param resolution: tuple of (width, height) of desired resolution.
+    :param resolution: Tuple of (width, height) of desired resolution.
                        If it's higher than the max resolution, it will be set to the max resolution.
-    :param fourcc: str of four character code for the codec. Either 'UYVY' or 'MJPG'.
+    :param fourcc: Str of four character code for the codec. Either 'UYVY' or 'MJPG'.
+    :param settings: Bool to open the camera settings window.
     :return: OpenCV's VideoCapture object.
     """
-    cap = cv2.VideoCapture(camera_number, cv2.CAP_DSHOW)  # This flag allows to configure the camera.
+    cap = cv2.VideoCapture(camera_number, cv2.CAP_DSHOW)  # This flag allows configuring the camera.
 
     cap.set(cv2.CAP_PROP_FRAME_WIDTH,  resolution[0])
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, resolution[1])
 
     if fourcc is not None:
         cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter.fourcc(*fourcc))  # Avoid .jpg.
+
+    if exposure is not None:
+        cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)  # Turn off auto exposure.
+        cap.set(cv2.CAP_PROP_EXPOSURE, exposure)
+    
+    if gain is not None:
+        cap.set(cv2.CAP_PROP_GAIN, gain)
+    
+    if settings or abs(cap.get(cv2.CAP_PROP_WHITE_BALANCE_BLUE_U) - 3000) > 110:
+        cap.set(cv2.CAP_PROP_SETTINGS, 0)
 
     return cap
 

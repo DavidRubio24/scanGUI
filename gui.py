@@ -1,7 +1,7 @@
-import sys
 import tkinter as tk
 from tkinter import ttk
 
+import cv2
 from PIL import Image, ImageTk
 
 
@@ -26,16 +26,21 @@ class GUI:
         mode_frame.grid(column=0, row=0, sticky='W')
 
         s = self.state
-        button_names    = ['Nuevo usuario', 'Calibración', 'Comprobar calibración', 'Encender luces', 'Apagar luces', 'Zoom +', 'Zoom -', 'Zoom reset']
-        button_commands = [s.new_capture, s.calibrate, s.check, self.lights_on, s.lights.off, s.zoom_in, s.zoom_out, s.zoom_reset]
+        button_names    = ['Nuevo usuario', 'Calibración', 'Comprobar calibración', 'Encender luces', 'Apagar luces',
+                           # 'Zoom +', 'Zoom -', 'Zoom reset',
+                           'Propiedades de cámara']
+        button_commands = [s.new_capture, s.calibrate, s.check, self.lights_on, s.lights.off,
+                           # s.zoom_in, s.zoom_out, s.zoom_reset,
+                           s.cam_properties]
         buttons = [tk.Button(mode_frame, text=txt, command=cmd) for txt, cmd in zip(button_names, button_commands)]
         for index, button in enumerate(buttons):
             button.grid(column=0, row=index, sticky='W')
             button.configure(width=30)
         self.buttons = buttons[:3]
+        self.properties_button = buttons[-1]
         self.set_mode(state.mode.value)
 
-        # Capture path and name
+        # Capture the path and name
         self.intensity = tk.StringVar(value=str(intensity))
         self.path_id   = tk.StringVar(value=path_id)
         self.prefix    = tk.StringVar(value='Serie: TEN_')
@@ -59,11 +64,13 @@ class GUI:
                 entry.configure(width=28)
 
         ttk.Button(path_frame, text="Capturar", command=state.capture_action).grid(column=0, row=4, sticky='SE')
-        ttk.Button(path_frame, text="M1", command=lambda: state.capture_action('M1')).grid(column=1, row=4, sticky='SE')
-        ttk.Button(path_frame, text="M2", command=lambda: state.capture_action('M2')).grid(column=1, row=4, sticky='SW')
+        ttk.Button(path_frame, text="M2", command=lambda: state.capture_action('M2')).grid(column=1, row=4, sticky='SE')
+        ttk.Button(path_frame, text="M1", command=lambda: state.capture_action('M1')).grid(column=1, row=4, sticky='SW')
         # Add text below the button
         self.text = ttk.Label(path_frame, text=self.state.text)
         self.text.grid(column=0, row=5, columnspan=2, sticky='SWE')
+        self.properties_text = ttk.Label(path_frame, text='')
+        self.properties_text.grid(column=0, row=6, columnspan=2, sticky='SWE')
 
         # Image
         self.image = None
@@ -86,7 +93,7 @@ class GUI:
         intensity = max(0, intensity)
         self.state.lights.on(int(intensity))
 
-    def update(self, period=10, update_state=True):
+    def update(self, period=10):
         """Updates the state and, afterwads, the GUI."""
         self.state.update()
 
@@ -100,10 +107,21 @@ class GUI:
             else:
                 self.state.text = ''
 
+        # Change the settongs button color if the camera doesn't have the appropriate settings.
+        if abs(self.state.cam.get(cv2.CAP_PROP_WHITE_BALANCE_BLUE_U) - 3000) <= 110:
+            self.properties_button.configure(bg='gray')
+            self.properties_text.configure(text='')
+        else:
+            self.properties_button.configure(bg='#FF5957')  # Shade of red.
+            self.properties_text.configure(text='¡ALERTA!\nRevisar:\nPropiedades de cámara > \n'
+                                                '> White balance > \n> 3000 NO Auto > OK',
+                                           font=('Helvetica', 15, 'bold'))
+        
         # Only when the state modifys the image, do we update it in the GUI.
         if self.state.image_updated:
             self.state.image_updated = False
-            self.image = ImageTk.PhotoImage(Image.fromarray(self.state.get_image()[..., ::-1]))
+            self.image = ImageTk.PhotoImage(Image.fromarray(self.state.get_image(rgb=True)))
+            # self.image = ImageTk.PhotoImage(Image.fromarray(self.state.get_image()[..., ::-1]))
             self.image_label.configure(image=self.image)
 
         self.root.update()
@@ -117,5 +135,6 @@ class GUI:
     def set_mode(self, value: int):
         """Color the buttons according to the mode. Blue for the current one, grey for the others."""
         for index, button in enumerate(self.buttons):
-            color = 'blue' if index == value else 'gray'
+            # Sade of blue or gray.
+            color = '#ADD8E6' if index == value else 'gray'
             button.configure(bg=color)

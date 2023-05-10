@@ -36,7 +36,7 @@ class State:
         self.image_size = (480, 640)
         self.image: np.ndarray = None
         self.image_updated: bool = True  # When True, the GUI needs to be updated
-        self.text = ''
+        self.text: str = ''
 
     def zoom_out(self):
         """Update the size to be displayed."""
@@ -53,16 +53,20 @@ class State:
         self.image_size = (480, 640)
         self.image_updated = True
 
+    def cam_properties(self):
+        self.cam.set(cv2.CAP_PROP_SETTINGS, 0)
+
     def update(self):
         """Ask for a new image from the camera and rotate it for the GUI."""
         success, image = self.cam.read()
         if not success or image is None or not np.any(image):
             return
         # Orient appropriately
-        self.image = image.transpose(1, 0, 2)[::-1, ::-1]
+        image = cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
+        self.image = cv2.flip(image, 1)
         self.image_updated = True
 
-    def get_image(self):
+    def get_image(self, rgb=False):
         """Returns the image to be displayed in the GUI."""
         if self.image is None:
             # There is no image, so return the wait image message.
@@ -87,7 +91,7 @@ class State:
                     image[y-r:y+r+1, x-r:x+r+1] = color
                 color = (0, 255, 0)
 
-        return image
+        return cv2.cvtColor(image, cv2.COLOR_BGR2RGB) if rgb else image
 
     def change_mode(self, mode: Mode):
         if mode == Mode.CAPTURE:
@@ -100,7 +104,7 @@ class State:
         self.text = ''
         self.mode = mode
         self.gui.set_mode(mode.value)
-        self.gui.update(update_state=False)
+        self.gui.update()
 
     def new_capture(self):
         self.change_mode(Mode.CAPTURE)
@@ -117,17 +121,24 @@ class State:
         """Save the image to the destination directory."""
         path_id = self.gui.path_id.get()
         big_id = self.gui.big_id.get()
+        # Remove the mode prefix if the user has inputed it.
+        for prefix in mode_names.values():
+            if big_id.upper().startswith(prefix):
+                big_id = big_id[len(prefix):]
+                break
         little_id = capture_name or self.gui.little_id.get()
         if not os.path.isdir(path_id): os.mkdir(path_id)
-        extension = 'png' if self.mode != Mode.CAPTURE else time.strftime("%Y%m%d", time.localtime()) + '.png'
+        extension = 'png' if self.mode != Mode.CAPTURE else time.strftime("%Y%m%d", time.localtime()) + '.bmp'
         filepath = os.path.join(path_id, f'{mode_names[self.mode]}{"0" * (4 - len(big_id))}{big_id}-{little_id}.{extension}')
         if os.path.isfile(filepath):
             i = 2
             while os.path.isfile(filepath):
                 filepath = os.path.join(path_id, f'{mode_names[self.mode]}{"0" * (4 - len(big_id))}{big_id}-{little_id}({i}).{extension}')
                 i += 1
-        cv2.imwrite(filepath, self.image)
         self.text = f"Capturado en:\n{path_id}\n{filepath[len(path_id):]}" + '\0' * 30
+        self.gui.text.configure(text=self.text)
+        self.gui.text.update()
+        cv2.imwrite(filepath, self.image)
 
         if self.mode == Mode.CALIBRATE:
             calibration = self.calibrations.get(big_id, Calibration())
@@ -148,7 +159,7 @@ class State:
                 self.text = 'Mueve el patron de 36x54 para poder detectarlo.'
             else:
                 self.text = f'Error: {error:.2f} mm'
-            self.gui.update(update_state=False)
+            self.gui.update()
 
         if capture_name is None:
             self.gui.little_id.set(utils.increase_name(little_id))

@@ -4,10 +4,10 @@ from enum import Enum
 
 import cv2
 import numpy as np
+from threading import Thread
 
 import utils
 from calibrate import Calibration, equidistant
-from gui import GUI
 from hardware import Lights
 
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
@@ -28,7 +28,7 @@ mode_names = {Mode.CAPTURE: 'TEN_',
 
 class State:
     def __init__(self, cam, lights):
-        self.gui: GUI = None
+        self.gui = None
         self.lights: Lights = lights
         self.cam: cv2.VideoCapture = cam
         self.calibrations = {'dafault': Calibration()}
@@ -37,6 +37,7 @@ class State:
         self.image: np.ndarray = None
         self.image_updated: bool = True  # When True, the GUI needs to be updated
         self.text: str = ''
+        Thread(target=self.update, daemon=True).start()
 
     def zoom_out(self):
         """Update the size to be displayed."""
@@ -57,22 +58,22 @@ class State:
         self.cam.set(cv2.CAP_PROP_SETTINGS, 0)
 
     def update(self):
-        """Ask for a new image from the camera and rotate it for the GUI."""
-        success, image = self.cam.read()
-        if not success or image is None or not np.any(image):
-            return
-        # Orient appropriately
-        image = cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
-        self.image = cv2.flip(image, 1)
-        self.image_updated = True
+        """Continously get images from the camera and rotate them for the GUI."""
+        time.sleep(5)
+        while True:
+            success, image = self.cam.read()
+            if not success or image is None or not np.any(image):
+                continue
+            # Orient appropriately
+            image = cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
+            self.image = cv2.flip(image, 1)
+            self.image_updated = True
 
     def get_image(self, rgb=False):
         """Returns the image to be displayed in the GUI."""
         if self.image is None:
-            # There is no image, so return the wait image message.
-            if IMAGE_WAIT.shape[:2] != self.image_size:
-                return cv2.resize(IMAGE_WAIT, self.image_size)
-            return IMAGE_WAIT
+            # There is no image yet, so return the wait image message.
+            return IMAGE_WAIT if IMAGE_WAIT.shape[:2] == self.image_size else cv2.resize(IMAGE_WAIT, self.image_size)
         image = cv2.resize(self.image, self.image_size)
         if self.mode == Mode.CAPTURE:
             # Draw a line in the middle for reference
@@ -82,14 +83,14 @@ class State:
                      (255, 30, 30), 2)
         elif self.mode == Mode.CALIBRATE:
             # Draw points over the calibration pattern.
-            color = (0, 0, 255)
+            color = (0, 0, 255)  # Color for the last captured pattern.
             r = 1
             for points in list(self.calibrations.values())[-1].points[::-1]:
                 for point in points:
                     x, y = point[0]
                     x, y = int(x * image.shape[1] // self.image.shape[1]), int(y * image.shape[0] // self.image.shape[0])
                     image[y-r:y+r+1, x-r:x+r+1] = color
-                color = (0, 255, 0)
+                color = (0, 255, 0)  # Color for the previous captured patterns.
 
         return cv2.cvtColor(image, cv2.COLOR_BGR2RGB) if rgb else image
 
@@ -105,17 +106,19 @@ class State:
         self.mode = mode
         self.gui.set_mode(mode.value)
         self.gui.update()
+        self.gui.text_time_to_live = float('inf')
 
     def new_capture(self):
         self.change_mode(Mode.CAPTURE)
+        self.gui.text.configure(text='')
 
     def calibrate(self):
         self.change_mode(Mode.CALIBRATE)
-        self.text = 'Captura el patrón de calibración de 7x10.'
+        self.gui.text.configure(text='Captura el patrón de calibración de 7x10.')
 
     def check(self):
         self.change_mode(Mode.CHECK)
-        self.text = 'Captura el patrón de comprobación de 36x54.'
+        self.gui.text.configure(text='Captura el patrón de comprobación de 36x54.')
 
     def capture_action(self, capture_name=None):
         """Save the image to the destination directory."""
@@ -126,30 +129,39 @@ class State:
             if big_id.upper().startswith(prefix):
                 big_id = big_id[len(prefix):]
                 break
-        little_id = capture_name or self.gui.little_id.get()
+        little_id = capture_name if isinstance(capture_name, str) else self.gui.little_id.get()
         if not os.path.isdir(path_id): os.mkdir(path_id)
-        extension = 'png' if self.mode != Mode.CAPTURE else time.strftime("%Y%m%d", time.localtime()) + '.bmp'
+        extension = 'png' if self.mode != Mode.CAPTURE else time.strftime("%Y%m%d", time.localtime()) + '.png'
         filepath = os.path.join(path_id, f'{mode_names[self.mode]}{"0" * (4 - len(big_id))}{big_id}-{little_id}.{extension}')
         if os.path.isfile(filepath):
             i = 2
             while os.path.isfile(filepath):
                 filepath = os.path.join(path_id, f'{mode_names[self.mode]}{"0" * (4 - len(big_id))}{big_id}-{little_id}({i}).{extension}')
                 i += 1
-        self.text = f"Capturado en:\n{path_id}\n{filepath[len(path_id):]}" + '\0' * 30
-        self.gui.text.configure(text=self.text)
+        # self.text = f"Capturado en:\n{path_id}\n{filepath[len(path_id):]}" + '\0' * 30
+        self.gui.text.configure(text=f"Capturado en:\n{path_id}\n{filepath[len(path_id):]}", font=('Arial', 9, 'bold'))
+        self.gui.text_time_to_live = time.time() + 2
         self.gui.text.update()
-        cv2.imwrite(filepath, self.image)
+        self.gui.text.after(100, self.gui.unbold_text)
+        self.gui.text.after(2050, self.gui.clear_text)
+        Thread(target=lambda: cv2.imwrite(filepath, self.image)).start()
+
+        if isinstance(capture_name, str):
+            self.gui.little_id.set(capture_name)
+        elif self.mode != Mode.CAPTURE:
+            self.gui.little_id.set(utils.increase_name(little_id))
 
         if self.mode == Mode.CALIBRATE:
             calibration = self.calibrations.get(big_id, Calibration())
             self.calibrations[big_id] = calibration
-            calibration.add_points(self.image, (6, 9))
-            calibration.calibrate()
-            camera_matrix = str(calibration.camera_matrix).replace("\n", "\n" + " " * 18)
-            dist_coeffs = str(calibration.dist_coeffs.squeeze().tolist())
-            with open(os.path.join(path_id, f'{big_id}.json'), 'w') as file:
-                file.write(f'{{"camera_matrix": {camera_matrix},\n"distortion_coefficients": {dist_coeffs}\n}}\n')
-                file.truncate()
+            success = calibration.add_points(self.image, (6, 9))
+            if success:
+                calibration.calibrate()
+                camera_matrix = str(calibration.camera_matrix).replace("\n", "\n" + " " * 18)
+                dist_coeffs = str(calibration.dist_coeffs.squeeze().tolist())
+                with open(os.path.join(path_id, f'{big_id}.json'), 'w') as file:
+                    file.write(f'{{"camera_matrix": {camera_matrix},\n"distortion_coefficients": {dist_coeffs}\n}}\n')
+                    file.truncate()
         elif self.mode == Mode.CHECK:
             calibration = list(self.calibrations.values())[-1]
             undistorted = calibration.undistort(self.image)
@@ -160,9 +172,6 @@ class State:
             else:
                 self.text = f'Error: {error:.2f} mm'
             self.gui.update()
-
-        if capture_name is None:
-            self.gui.little_id.set(utils.increase_name(little_id))
 
     def __del__(self):
         self.gui = None

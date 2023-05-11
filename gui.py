@@ -1,8 +1,11 @@
+import time
 import tkinter as tk
 from tkinter import ttk
 
 import cv2
 from PIL import Image, ImageTk
+
+from state import Mode
 
 
 class GUI:
@@ -69,8 +72,10 @@ class GUI:
         # Add text below the button
         self.text = ttk.Label(path_frame, text=self.state.text)
         self.text.grid(column=0, row=5, columnspan=2, sticky='SWE')
+        self.text_time_to_live = float('inf')
         self.properties_text = ttk.Label(path_frame, text='')
         self.properties_text.grid(column=0, row=6, columnspan=2, sticky='SWE')
+        self.properties_text_time_to_live = 0
 
         # Image
         self.image = None
@@ -95,38 +100,50 @@ class GUI:
 
     def update(self, period=10):
         """Updates the state and, afterwads, the GUI."""
-        self.state.update()
-
-        self.text.configure(text=self.state.text)
-        # Okay, bear with me. So, self.state.capture_action adds a bunch of '\0' to the end of the string.
-        # Every time that we update the GUI, we remove one of them. When all of them are removed, we remove the text.
-        # This is basically a timer to remove the text. A poorly implemented one, I know.
-        if len(self.state.text) > 2 and self.state.text[-1] == '\0':
-            if self.state.text[-2] == '\0':
-                self.state.text = self.state.text[:-1]
-            else:
-                self.state.text = ''
 
         # Change the settongs button color if the camera doesn't have the appropriate settings.
         if abs(self.state.cam.get(cv2.CAP_PROP_WHITE_BALANCE_BLUE_U) - 3000) <= 110:
             self.properties_button.configure(bg='gray')
-            self.properties_text.configure(text='')
+            if self.properties_text_time_to_live == -1:
+                self.properties_text.configure(text='Pulsa OK',
+                                               font=('Helvetica', 15, 'bold'))
+                self.properties_text_time_to_live = time.time() + 1.5
+                self.properties_button.after(2000, self.clear_properties_text)
         else:
             self.properties_button.configure(bg='#FF5957')  # Shade of red.
             self.properties_text.configure(text='¡ALERTA!\nRevisar:\nPropiedades de cámara > \n'
                                                 '> White balance > \n> 3000 NO Auto > OK',
                                            font=('Helvetica', 15, 'bold'))
+            self.properties_text_time_to_live = -1
         
         # Only when the state modifys the image, do we update it in the GUI.
         if self.state.image_updated:
             self.state.image_updated = False
             self.image = ImageTk.PhotoImage(Image.fromarray(self.state.get_image(rgb=True)))
-            # self.image = ImageTk.PhotoImage(Image.fromarray(self.state.get_image()[..., ::-1]))
             self.image_label.configure(image=self.image)
 
         self.root.update()
 
         self.root.after(period, self.update)
+
+    def unbold_text(self):
+        text = self.text.cget('text')
+        self.text.configure(text=text, font=('Arial', 9, 'normal'))
+    
+    def clear_text(self):
+        if self.text_time_to_live < time.time():
+            if self.state.mode == Mode.CAPTURE:
+                self.text.configure(text='')
+            elif self.state.mode == Mode.CALIBRATE:
+                self.text.configure(text='Captura el patrón de calibración de 7x10.')
+            elif self.state.mode == Mode.CHECK:
+                self.text.configure(text='Captura el patrón de comprobación de 36x54.')
+            self.text.update()
+    
+    def clear_properties_text(self):
+        if self.properties_text_time_to_live < time.time():
+            self.properties_text.configure(text='')
+            self.properties_text.update()
 
     def __del__(self):
         self.root.destroy()

@@ -22,3 +22,9 @@ So we use exclusively openCV for those transformations.
 ## Saving format
 Saving the image to .png takes a full second. Saving a .bmp takes a 0.2 s.
 We'll save them in .bmp and convert them afterward.
+
+
+# VideoCapture properties change
+The test camera was unable to use the MPEG, JPEG or MJPG fourcc codecs.
+
+A change in resolution made the camera stop working.

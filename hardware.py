@@ -30,11 +30,14 @@ class Lights:
 class DummyLights:
     def __init__(self, *_, **__): pass
 
-    def on(self, *_, **__): pass
+    def on(self, *_, **__):
+        print('DummyLights.on()', _, __)
 
-    def off(self, *_, **__): pass
+    def off(self, *_, **__):
+        print('DummyLights.off()', _, __)
 
-    def toggle(self, *_, **__): pass
+    def toggle(self, *_, **__):
+        print('DummyLights.toggle()', _, __)
 
 
 def camera(camera_number=0, resolution=(4208, 3120), fourcc='UYVY', exposure=-5, gain=0, settings=False):

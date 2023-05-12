@@ -24,37 +24,57 @@ class GUI:
         self.left_frame.grid(column=0, row=0, sticky='NWES')
         self.left_frame.columnconfigure(0, weight=1)
 
-        # Mode selection
+        # Buttons
         mode_frame = ttk.Frame(self.left_frame)
         mode_frame.grid(column=0, row=0, sticky='W')
 
         s = self.state
-        button_names    = ['Nuevo usuario', 'Calibración', 'Comprobar calibración', 'Encender luces', 'Apagar luces',
-                           # 'Zoom +', 'Zoom -', 'Zoom reset',
-                           'Propiedades de cámara']
-        button_commands = [s.new_capture, s.calibrate, s.check, self.lights_on, s.lights.off,
-                           # s.zoom_in, s.zoom_out, s.zoom_reset,
-                           s.cam_properties]
-        buttons = [tk.Button(mode_frame, text=txt, command=cmd) for txt, cmd in zip(button_names, button_commands)]
+        buttons = [('Nuevo usuario', s.new_capture),
+                   ('Calibración', s.calibrate),
+                   ('Comprobar calibración', s.check),
+                   ('Encender luces', self.lights_on),
+                   ('Apagar luces', s.lights.off),
+                   # ('Zoom +', s.zoom_in),
+                   # ('Zoom -', s.zoom_out),
+                   # ('Zoom reset', s.zoom_reset),
+                   ('Propiedades de cámara', s.cam_properties)
+                   ]
+        buttons = [tk.Button(mode_frame, text=txt, command=cmd) for txt, cmd in buttons]
         for index, button in enumerate(buttons):
             button.grid(column=0, row=index, sticky='W')
-            button.configure(width=30)
+            button.configure(width=31)
         self.buttons = buttons[:3]
         self.properties_button = buttons[-1]
         self.set_mode(state.mode.value)
 
-        # Capture the path and name
+        # Fields
         self.intensity = tk.StringVar(value=str(intensity))
         self.path_id   = tk.StringVar(value=path_id)
         self.prefix    = tk.StringVar(value='Serie: TEN_')
         self.big_id    = tk.StringVar(value='')
         self.little_id = tk.StringVar(value='M1')
+        
+        self.turn = 0
+        
+        def update_intensity(intensity, my_turn):
+            if my_turn + 1 != self.turn:
+                return
+            self.state.lights.on(int(intensity))
+        
+        def on_intensity_change(*args):
+            my_turn = self.turn
+            self.turn += 1
+            text = self.intensity.get()
+            if text.isdigit() and 0 <= int(text) <= 100:
+                self.root.after(300, update_intensity, int(int(text)  * 255 / 100), my_turn)
+        
+        self.intensity.trace_add('write', on_intensity_change)
 
         path_frame = tk.Frame(self.left_frame)
         path_frame.grid(column=0, row=1, sticky='W')
         ttk.Label(path_frame, text="Iluminación:").        grid(column=0, row=0, sticky='SW')
         ttk.Entry(path_frame, textvariable=self.intensity).grid(column=1, row=0, sticky='SW')
-        ttk.Label(path_frame, text="%").                   grid(column=2, row=0, sticky='SW')
+        ttk.Label(path_frame, text="%").                   grid(column=1, row=0, sticky='SE')
         ttk.Label(path_frame, text="Carpeta:").            grid(column=0, row=1, sticky='SW')
         ttk.Label(path_frame, text=path_id).               grid(column=1, row=1, sticky='SW')
         ttk.Label(path_frame, textvariable=self.prefix).   grid(column=0, row=2, sticky='SW')
@@ -63,8 +83,10 @@ class GUI:
         ttk.Entry(path_frame, textvariable=self.little_id).grid(column=1, row=3, sticky='SW')
 
         for key, entry in path_frame.children.items():
-            if '!entry' in key:
-                entry.configure(width=28)
+            if '!entry' == key:
+                entry.configure(width=21)
+            elif '!entry' in key:
+                entry.configure(width=24)
 
         ttk.Button(path_frame, text="Capturar", command=state.capture_action).grid(column=0, row=4, sticky='SE')
         ttk.Button(path_frame, text="M2", command=lambda: state.capture_action('M2')).grid(column=1, row=4, sticky='SE')

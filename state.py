@@ -36,7 +36,6 @@ class State:
         self.image_size = (480, 640)
         self.image: np.ndarray = None
         self.image_updated: bool = True  # When True, the GUI needs to be updated
-        self.text: str = ''
         Thread(target=self.update, daemon=True).start()
 
     def zoom_out(self):
@@ -63,6 +62,7 @@ class State:
         while True:
             success, image = self.cam.read()
             if not success or image is None or not np.any(image):
+                time.sleep(.2)
                 continue
             # Orient appropriately
             image = cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
@@ -102,7 +102,6 @@ class State:
         self.gui.prefix.set('Serie: ' + mode_names[mode])
         self.gui.big_id.set(big_id)
         self.gui.little_id.set('M1' if mode == Mode.CAPTURE else '0')
-        self.text = ''
         self.mode = mode
         self.gui.set_mode(mode.value)
         self.gui.update()
@@ -168,9 +167,10 @@ class State:
             cv2.imwrite(os.path.join(path_id, f'{big_id}-{little_id}-undistorted.png'), undistorted)
             error = equidistant(undistorted)
             if error is None:
-                self.text = 'Mueve el patron de 36x54 para poder detectarlo.'
+                text = 'Mueve el patron de 36x54 para poder detectarlo.'
             else:
-                self.text = f'Error: {error:.2f} mm'
+                text = f'Error: {error:.2f} mm'
+            self.gui.text.configure(text=text)
             self.gui.update()
 
     def __del__(self):

@@ -9,6 +9,10 @@ import config
 from state import Mode
 
 
+WB_MESSAGE = ('¡ALERTA!\nRevisar:\nPropiedades de cámara > \n'
+              '> White balance > \n> {white_balance} NO Auto > OK')
+
+
 class GUI:
     def __init__(self, state, path_id='D:/HANDSCANNER_DATA/', loop=True, intensity=30):
         state.gui = self
@@ -29,18 +33,17 @@ class GUI:
         mode_frame = ttk.Frame(self.left_frame)
         mode_frame.grid(column=0, row=0, sticky='W')
 
-        s = self.state
-        buttons = [('Nuevo usuario', s.new_capture),
-                   ('Calibración', s.calibrate),
-                   ('Comprobar calibración', s.check),
+        buttons = [('Nuevo usuario', self.state.new_capture),
+                   ('Calibración', self.state.calibrate),
+                   ('Comprobar calibración', self.state.check),
                    ('Encender luces', self.lights_on),
-                   ('Apagar luces', s.lights.off),
-                   # ('Zoom +', s.zoom_in),
-                   # ('Zoom -', s.zoom_out),
-                   # ('Zoom reset', s.zoom_reset),
-                   ('Propiedades de cámara', s.cam_properties)
+                   ('Apagar luces', self.state.lights.off),
+                   # ('Zoom +', self.state.zoom_in),
+                   # ('Zoom -', self.state.zoom_out),
+                   # ('Zoom reset', self.state.zoom_reset),
+                   ('Propiedades de cámara', self.state.cam_properties)
                    ]
-        buttons = [tk.Button(mode_frame, text=txt, command=cmd) for txt, cmd in buttons]
+        buttons = [tk.Button(mode_frame, text=text, command=function) for text, function in buttons]
         for index, button in enumerate(buttons):
             button.grid(column=0, row=index, sticky='W')
             button.configure(width=31)
@@ -89,11 +92,13 @@ class GUI:
             elif '!entry' in key:
                 entry.configure(width=24)
 
+        # Capture buttons
         ttk.Button(path_frame, text="Capturar", command=state.capture_action).grid(column=0, row=4, sticky='SE')
         ttk.Button(path_frame, text="M2", command=lambda: state.capture_action('M2')).grid(column=1, row=4, sticky='SE')
         ttk.Button(path_frame, text="M1", command=lambda: state.capture_action('M1')).grid(column=1, row=4, sticky='SW')
-        # Add text below the button
-        self.text = ttk.Label(path_frame, text=self.state.text)
+        
+        # Add text below the buttons
+        self.text = ttk.Label(path_frame, text='')
         self.text.grid(column=0, row=5, columnspan=2, sticky='SWE')
         self.text_time_to_live = float('inf')
         self.properties_text = ttk.Label(path_frame, text='')
@@ -102,15 +107,15 @@ class GUI:
 
         # Image
         self.image = None
+        """Image to be displayed. If not saved, it will be garbage collected."""
         self.image_label = ttk.Label(self.mainframe)
         self.image_label.grid(row=0, column=1)
 
-        # Actions on close and intro.
+        # Actions on close and enter.
         self.root.protocol("WM_DELETE_WINDOW", self.__del__)
         self.root.bind("<Return>", state.capture_action)
 
         self.update()
-        self.root.after(10, self.update)
         self.root.after(1000, self.state.lights.on)  # It doesn't work if done inmediately. ¯\_(ツ)_/¯
         if loop:
             self.root.mainloop()
@@ -121,7 +126,7 @@ class GUI:
         intensity = max(0, intensity)
         self.state.lights.on(int(intensity))
 
-    def update(self, period=10):
+    def update(self, period=100):
         """Updates the state and, afterwads, the GUI."""
 
         # Change the settongs button color if the camera doesn't have the appropriate settings.
@@ -134,20 +139,23 @@ class GUI:
                 self.properties_button.after(2000, self.clear_properties_text)
         else:
             self.properties_button.configure(bg='#FF5957')  # Shade of red.
-            self.properties_text.configure(text='¡ALERTA!\nRevisar:\nPropiedades de cámara > \n'
-                                                f'> White balance > \n> {config.balance_de_blancos} NO Auto > OK',
+            self.properties_text.configure(text=WB_MESSAGE.format(white_balance=config.balance_de_blancos),
                                            font=('Helvetica', 15, 'bold'))
             self.properties_text_time_to_live = -1
         
         # Only when the state modifys the image, do we update it in the GUI.
         if self.state.image_updated:
             self.state.image_updated = False
-            self.image = ImageTk.PhotoImage(Image.fromarray(self.state.get_image(rgb=True)))
-            self.image_label.configure(image=self.image)
+            self.update_image(self.state.get_image(rgb=True))
 
         self.root.update()
 
         self.root.after(period, self.update)
+    
+    def update_image(self, image):
+        self.image = ImageTk.PhotoImage(Image.fromarray(image))
+        self.image_label.configure(image=self.image)
+        self.root.update()
 
     def unbold_text(self):
         text = self.text.cget('text')

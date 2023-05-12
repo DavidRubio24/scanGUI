@@ -1,12 +1,14 @@
 import cv2
 import serial
+import serial.tools.list_ports
 import numpy as np
+
+import config
 
 
 class Lights:
     """An object to deal with the Arduino controlled lights."""
     def __init__(self, port='COM3', baudrate=57600, timeout=.1):
-        port = port if isinstance(port, str) else f'COM{port}'
         self.arduino = serial.Serial(port, baudrate, timeout=timeout)
         self.turned_on = False  # This is not necessarily true. It works anyway after the first interaction.
         self.__del__ = self.arduino.close
@@ -40,6 +42,25 @@ class DummyLights:
         print('DummyLights.toggle()', _, __)
 
 
+def lights(port='COM3', baudrate=57600, timeout=.1):
+    port = port if isinstance(port, str) else f'COM{port}'
+    ports = serial.tools.list_ports.comports()
+    if port not in [port.device for port in ports]:
+        print(f'Lights port {port} not found.\nPorts available:')
+        for port in ports:
+            print(port.device, port.description)
+        print('Enter the port for the lights (', end='')
+        print(*[port.device for port in ports], sep=', ', end='')
+        port = input('... or Enter for no lights):')
+        if port.strip():
+            return lights(port, baudrate, timeout)
+        else:
+            print('Not using lights.')
+            return DummyLights()
+    else:
+        return Lights(port, baudrate, timeout)
+
+
 def camera(camera_number=0, resolution=(4208, 3120), fourcc='UYVY', exposure=-5, gain=0, settings=False):
     """
     Return a VideoCapture object for the camera.
@@ -66,7 +87,7 @@ def camera(camera_number=0, resolution=(4208, 3120), fourcc='UYVY', exposure=-5,
     if gain is not None:
         cap.set(cv2.CAP_PROP_GAIN, gain)
     
-    if settings or abs(cap.get(cv2.CAP_PROP_WHITE_BALANCE_BLUE_U) - 3000) > 110:
+    if settings or abs(cap.get(cv2.CAP_PROP_WHITE_BALANCE_BLUE_U) - config.balance_de_blancos) > 40:
         cap.set(cv2.CAP_PROP_SETTINGS, 0)
 
     return cap

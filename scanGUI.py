@@ -8,7 +8,7 @@ import config
 
 def main(*_):
     state = State(hardware.camera(config.cam),
-                  hardware.Lights(config.luz))
+                  hardware.lights(config.luz))
     gui = GUI(state, config.directorio_destino, intensity=config.intensidad)
 
 

@@ -5,6 +5,7 @@ from tkinter import ttk
 import cv2
 from PIL import Image, ImageTk
 
+import config
 from state import Mode
 
 
@@ -124,7 +125,7 @@ class GUI:
         """Updates the state and, afterwads, the GUI."""
 
         # Change the settongs button color if the camera doesn't have the appropriate settings.
-        if abs(self.state.cam.get(cv2.CAP_PROP_WHITE_BALANCE_BLUE_U) - 3000) <= 110:
+        if abs(self.state.cam.get(cv2.CAP_PROP_WHITE_BALANCE_BLUE_U) - config.balance_de_blancos) <= 40:
             self.properties_button.configure(bg='gray')
             if self.properties_text_time_to_live == -1:
                 self.properties_text.configure(text='Pulsa OK',
@@ -134,7 +135,7 @@ class GUI:
         else:
             self.properties_button.configure(bg='#FF5957')  # Shade of red.
             self.properties_text.configure(text='¡ALERTA!\nRevisar:\nPropiedades de cámara > \n'
-                                                '> White balance > \n> 3000 NO Auto > OK',
+                                                f'> White balance > \n> {config.balance_de_blancos} NO Auto > OK',
                                            font=('Helvetica', 15, 'bold'))
             self.properties_text_time_to_live = -1
         

@@ -142,7 +142,7 @@ class State:
         self.gui.text_time_to_live = time.time() + 2
         self.gui.text.update()
         self.gui.text.after(100, self.gui.unbold_text)
-        self.gui.text.after(2050, self.gui.clear_text)
+        clear_id = self.gui.text.after(2050, self.gui.clear_text)
         Thread(target=lambda: cv2.imwrite(filepath, self.image)).start()
 
         if isinstance(capture_name, str):
@@ -162,6 +162,7 @@ class State:
                     file.write(f'{{"camera_matrix": {camera_matrix},\n"distortion_coefficients": {dist_coeffs}\n}}\n')
                     file.truncate()
         elif self.mode == Mode.CHECK:
+            self.gui.text.after_cancel(clear_id)
             calibration = list(self.calibrations.values())[-1]
             undistorted = calibration.undistort(self.image)
             cv2.imwrite(os.path.join(path_id, f'{big_id}-{little_id}-undistorted.png'), undistorted)
@@ -171,7 +172,7 @@ class State:
             else:
                 text = f'Error: {error:.2f} mm'
             self.gui.text.configure(text=text)
-            self.gui.update()
+            self.gui.text.update()
 
     def __del__(self):
         self.gui = None

@@ -41,7 +41,7 @@ class GUI:
                    # ('Zoom +', self.state.zoom_in),
                    # ('Zoom -', self.state.zoom_out),
                    # ('Zoom reset', self.state.zoom_reset),
-                   ('Propiedades de cámara', self.state.cam_properties)
+                   ('Propiedades de cámara', self.state.cam_properties),
                    ]
         buttons = [tk.Button(mode_frame, text=text, command=function) for text, function in buttons]
         for index, button in enumerate(buttons):
@@ -77,7 +77,8 @@ class GUI:
         path_frame = tk.Frame(self.left_frame)
         path_frame.grid(column=0, row=1, sticky='W')
         ttk.Label(path_frame, text="Iluminación:").        grid(column=0, row=0, sticky='SW')
-        ttk.Entry(path_frame, textvariable=self.intensity).grid(column=1, row=0, sticky='SW')
+        ttk.Spinbox(path_frame, textvariable=self.intensity,
+                    increment=5, from_=0, to=100).         grid(column=1, row=0, sticky='SW')
         ttk.Label(path_frame, text="%").                   grid(column=1, row=0, sticky='SE')
         ttk.Label(path_frame, text="Carpeta:").            grid(column=0, row=1, sticky='SW')
         ttk.Label(path_frame, text=path_id).               grid(column=1, row=1, sticky='SW')
@@ -87,8 +88,8 @@ class GUI:
         ttk.Entry(path_frame, textvariable=self.little_id).grid(column=1, row=3, sticky='SW')
 
         for key, entry in path_frame.children.items():
-            if '!entry' == key:
-                entry.configure(width=21)
+            if '!spinbox' == key:
+                entry.configure(width=19)
             elif '!entry' in key:
                 entry.configure(width=24)
 
@@ -129,7 +130,7 @@ class GUI:
     def update(self, period=100):
         """Updates the state and, afterwads, the GUI."""
 
-        # Change the settongs button color if the camera doesn't have the appropriate settings.
+        # Change the settings button color if the camera doesn't have the appropriate settings.
         if abs(self.state.cam.get(cv2.CAP_PROP_WHITE_BALANCE_BLUE_U) - config.balance_de_blancos) <= 40:
             self.properties_button.configure(bg='gray')
             if self.properties_text_time_to_live == -1:

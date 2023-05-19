@@ -8,7 +8,7 @@ import config
 
 
 log = logging.getLogger(__name__); log.setLevel(logging.INFO)
-formatter = logging.Formatter('\x1B[0;34m{asctime} {name}.{funcName}:{lineno} {levelname:5}\x1B[0m\t{message}', style='{')
+formatter = logging.Formatter('{levelname}:\t{message}', style='{')
 log.addHandler(logging.StreamHandler()); log.handlers[-1].setFormatter(formatter)  # Defaults to sys.stderr.
 
 

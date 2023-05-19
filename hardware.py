@@ -43,22 +43,22 @@ class DummyLights:
 
 
 def lights(port='COM3', baudrate=57600, timeout=.1):
-    port = port if isinstance(port, str) else f'COM{port}'
+    port = port if isinstance(port, str) and not port.isdigit() else f'COM{port}'
     ports = serial.tools.list_ports.comports()
-    if port not in [port.device for port in ports]:
-        print(f'Lights port {port} not found.\nPorts available:')
-        for port in ports:
-            print(port.device, port.description)
-        print('Enter the port for the lights (', end='')
-        print(*[port.device for port in ports], sep=', ', end='')
-        port = input('... or Enter for no lights):')
-        if port.strip():
-            return lights(port, baudrate, timeout)
-        else:
-            print('Not using lights.')
-            return DummyLights()
-    else:
+    if port in [p.device for p in ports]:
         return Lights(port, baudrate, timeout)
+    
+    print(f'Lights port {port} not found.\nPorts available:')
+    for port in sorted(ports, key=lambda port: port.device):
+        print('    · ', port.device, ': ', port.description, sep='')
+    print('Enter the port for the lights (', end='')
+    print(*sorted([port.device for port in ports]), sep=', ', end='')
+    port = input('... or press <Enter> for no lights): ')
+    
+    if port.strip():
+        return lights(port, baudrate, timeout)
+    print('Not using lights.')
+    return DummyLights()
 
 
 def camera(camera_number=0, resolution=(4208, 3120), fourcc='UYVY', exposure=-5, gain=0, settings=False):

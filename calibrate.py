@@ -28,13 +28,13 @@ class Calibration:
     def add_points(self, image, pattern_size=(55, 37), window_size=25) -> bool:
         image = utils.open_image(image)
         points = get_checker(image, pattern_size, window_size)
-        if len(points):
-            self.points.append(points)
-            self.pattern_sizes.append(pattern_size)
-            self.image_size = image.shape[:2]
-            self.images.append(image)
-            return True
-        return False
+        if not len(points):
+            return False
+        self.points.append(points)
+        self.pattern_sizes.append(pattern_size)
+        self.image_size = image.shape[:2]
+        self.images.append(image)
+        return True
 
     def calibrate(self, side=1):
         if not self.points:
@@ -51,15 +51,20 @@ class Calibration:
     def undistort(self, image) -> np.ndarray:
         return cv2.undistort(utils.open_image(image), self.camera_matrix, self.dist_coeffs)
 
+    def __str__(self):
+        camera_matrix = str(self.camera_matrix.tolist()).replace("], ", "],\n" + " " * 18)
+        dist_coeffs = str(self.dist_coeffs.squeeze().tolist())
+        return f'{{\n"camera_matrix": {camera_matrix},\n"distortion_coefficients": {dist_coeffs}\n}}\n'
+
 
 def get_checker(image, pattern_size=(53, 35), window_size=25) -> np.ndarray:
-    image = utils.open_image(image, False)
+    image = utils.open_image(image)
     if image is None:
         return np.array([])
 
-    for x in [360, 480, 720, 1080, image.shape[0]]:
-        y = int(x * image.shape[1] / image.shape[0])
-        success, points = cv2.findChessboardCorners(cv2.resize(image, (x, y)), pattern_size)
+    for x_size in [360, 480, 720, 1080, image.shape[0]]:
+        y_size = int(x_size * image.shape[1] / image.shape[0])
+        success, points = cv2.findChessboardCorners(cv2.resize(image, (x_size, y_size)), pattern_size)
         if success:
             break
 
@@ -68,8 +73,8 @@ def get_checker(image, pattern_size=(53, 35), window_size=25) -> np.ndarray:
 
     # Resize the points to the window size
     points = np.array(points)
-    points[..., 0] = points[..., 0] * image.shape[1] / x
-    points[..., 1] = points[..., 1] * image.shape[0] / y
+    points[..., 0] = points[..., 0] * image.shape[1] / x_size
+    points[..., 1] = points[..., 1] * image.shape[0] / y_size
 
     points = cv2.cornerSubPix(cv2.cvtColor(image, cv2.COLOR_BGR2GRAY),
                               points,
@@ -79,7 +84,8 @@ def get_checker(image, pattern_size=(53, 35), window_size=25) -> np.ndarray:
     return points
 
 
-def equidistant(image, pattern_size=(53, 35)):
+def equidistant(image, pattern_size=(53, 35), pixels_per_mm=12.32):
+    """Compares the distances between the points in the image and in the ideal pattern."""
     points = get_checker(image, pattern_size[::-1])
     if points is None or not len(points):
         return None
@@ -87,18 +93,19 @@ def equidistant(image, pattern_size=(53, 35)):
     points = points.reshape(*pattern_size, -1)
     ideal = np.array([[(i, j) for j in range(pattern_size[1])] for i in range(pattern_size[0])])
 
+    # Fix the extremes of one diagonal and compare the paterns.
     distances = np.linalg.norm(points - points[0, 0], axis=2)
     ideal_distances = np.linalg.norm(ideal - ideal[0, 0], axis=2)
     ideal_distances *= distances[-1, -1] / ideal_distances[-1, -1]
     one = abs(distances - ideal_distances)
 
+    # Fix the extremes of the other diagonal and compare the paterns.
     distances = np.linalg.norm(points - points[-1, 0], axis=2)
     ideal_distances = np.linalg.norm(ideal - ideal[-1, 0], axis=2)
     ideal_distances *= distances[0, -1] / ideal_distances[0, -1]
     two = abs(distances - ideal_distances)
 
-    # 12.32 pixels por mm
-    return np.mean([one, two]) / 12.32
+    return np.mean([one, two]) / pixels_per_mm
 
 
 def calibrate_folder(path=r'\\10.10.204.24\scan4d\TENDER\HANDS_SIN_CALIBRAR/',

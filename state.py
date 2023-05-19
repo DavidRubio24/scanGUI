@@ -59,13 +59,14 @@ class State:
     def update(self):
         """Continously get images from the camera and rotate them for the GUI."""
         time.sleep(5)
+        image_buffer = None  # Use always the same buffer to avoid memory allocation.
         while True:
-            success, image = self.cam.read()
-            if not success or image is None or not np.any(image):
+            success, image_buffer = self.cam.read(image_buffer)
+            if not success or image_buffer is None or not np.any(image_buffer):
                 time.sleep(.2)
                 continue
-            # Orient appropriately
-            image = cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
+            # Orient appropriately.
+            image = cv2.rotate(image_buffer, cv2.ROTATE_90_COUNTERCLOCKWISE)
             self.image = cv2.flip(image, 1)
             self.image_updated = True
 
@@ -73,7 +74,7 @@ class State:
         """Returns the image to be displayed in the GUI."""
         if self.image is None:
             # There is no image yet, so return the wait image message.
-            return IMAGE_WAIT if IMAGE_WAIT.shape[:2] == self.image_size else cv2.resize(IMAGE_WAIT, self.image_size)
+            return IMAGE_WAIT
         image = cv2.resize(self.image, self.image_size)
         if self.mode == Mode.CAPTURE:
             # Draw a line in the middle for reference
@@ -132,11 +133,10 @@ class State:
         if not os.path.isdir(path_id): os.mkdir(path_id)
         extension = 'png' if self.mode != Mode.CAPTURE else time.strftime("%Y%m%d", time.localtime()) + '.png'
         filepath = os.path.join(path_id, f'{mode_names[self.mode]}{"0" * (4 - len(big_id))}{big_id}-{little_id}.{extension}')
-        if os.path.isfile(filepath):
-            i = 2
-            while os.path.isfile(filepath):
-                filepath = os.path.join(path_id, f'{mode_names[self.mode]}{"0" * (4 - len(big_id))}{big_id}-{little_id}({i}).{extension}')
-                i += 1
+        i = 2
+        while os.path.isfile(filepath):
+            filepath = os.path.join(path_id, f'{mode_names[self.mode]}{"0" * (4 - len(big_id))}{big_id}-{little_id}({i}).{extension}')
+            i += 1
         # self.text = f"Capturado en:\n{path_id}\n{filepath[len(path_id):]}" + '\0' * 30
         self.gui.text.configure(text=f"Capturado en:\n{path_id}\n{filepath[len(path_id):]}", font=('Arial', 9, 'bold'))
         self.gui.text_time_to_live = time.time() + 2
@@ -154,13 +154,11 @@ class State:
             calibration = self.calibrations.get(big_id, Calibration())
             self.calibrations[big_id] = calibration
             success = calibration.add_points(self.image, (6, 9))
-            if success:
-                calibration.calibrate()
-                camera_matrix = str(calibration.camera_matrix).replace("\n", "\n" + " " * 18)
-                dist_coeffs = str(calibration.dist_coeffs.squeeze().tolist())
-                with open(os.path.join(path_id, f'{big_id}.json'), 'w') as file:
-                    file.write(f'{{"camera_matrix": {camera_matrix},\n"distortion_coefficients": {dist_coeffs}\n}}\n')
-                    file.truncate()
+            if not success:
+                return
+            calibration.calibrate()
+            with open(os.path.join(path_id, f'{big_id}.json'), 'w') as file:
+                file.write(str(calibration))
         elif self.mode == Mode.CHECK:
             self.gui.text.after_cancel(clear_id)
             calibration = list(self.calibrations.values())[-1]

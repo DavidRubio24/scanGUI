@@ -94,9 +94,12 @@ class GUI:
                 entry.configure(width=24)
 
         # Capture buttons
-        ttk.Button(path_frame, text="Capturar", command=state.capture_action).grid(column=0, row=4, sticky='SE')
-        ttk.Button(path_frame, text="M2", command=lambda: state.capture_action('M2')).grid(column=1, row=4, sticky='SE')
-        ttk.Button(path_frame, text="M1", command=lambda: state.capture_action('M1')).grid(column=1, row=4, sticky='SW')
+        self.capturar = ttk.Button(path_frame, text="Capturar", command=state.capture_action)
+        # self.capturar.grid(column=0, row=4, sticky='SE')
+        self.m2 = ttk.Button(path_frame, text="M2", command=lambda: state.capture_action('M2'))
+        self.m2.grid(column=1, row=4, sticky='SE')
+        self.m1 = ttk.Button(path_frame, text="M1", command=lambda: state.capture_action('M1'))
+        self.m1.grid(column=1, row=4, sticky='SW')
         
         # Add text below the buttons
         self.text = ttk.Label(path_frame, text='')
@@ -117,7 +120,7 @@ class GUI:
         self.root.bind("<Return>", state.capture_action)
 
         self.update()
-        self.root.after(1000, self.state.lights.on)  # It doesn't work if done inmediately. ¯\_(ツ)_/¯
+        self.root.after(1800, self.state.lights.on)  # It doesn't work if done inmediately. ¯\_(ツ)_/¯
         if loop:
             self.root.mainloop()
 
@@ -164,6 +167,7 @@ class GUI:
     
     def clear_text(self):
         if self.text_time_to_live < time.time():
+            self.text.configure(foreground='black')
             if self.state.mode == Mode.CAPTURE:
                 self.text.configure(text='')
             elif self.state.mode == Mode.CALIBRATE:

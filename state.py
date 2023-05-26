@@ -96,10 +96,17 @@ class State:
         return cv2.cvtColor(image, cv2.COLOR_BGR2RGB) if rgb else image
 
     def change_mode(self, mode: Mode):
+        self.gui.text.configure(foreground='black')
         if mode == Mode.CAPTURE:
             big_id = ''
+            self.gui.capturar.grid_forget()
+            self.gui.m1.grid(column=1, row=4, sticky='SE')
+            self.gui.m2.grid(column=1, row=4, sticky='SW')
         else:
             big_id = time.strftime("%Y%m%d%H%M%S", time.localtime())
+            self.gui.capturar.grid(column=0, row=4, sticky='SW')
+            self.gui.m1.grid_forget()
+            self.gui.m2.grid_forget()
         self.gui.prefix.set('Serie: ' + mode_names[mode])
         self.gui.big_id.set(big_id)
         self.gui.little_id.set('M1' if mode == Mode.CAPTURE else '0')
@@ -139,6 +146,8 @@ class State:
             i += 1
         # self.text = f"Capturado en:\n{path_id}\n{filepath[len(path_id):]}" + '\0' * 30
         self.gui.text.configure(text=f"Capturado en:\n{path_id}\n{filepath[len(path_id):]}", font=('Arial', 9, 'bold'))
+        if not big_id or big_id == '0' * len(big_id):
+            self.gui.text.configure(foreground='red')
         self.gui.text_time_to_live = time.time() + 2
         self.gui.text.update()
         self.gui.text.after(100, self.gui.unbold_text)
@@ -157,13 +166,13 @@ class State:
             if not success:
                 return
             calibration.calibrate()
-            with open(os.path.join(path_id, f'{big_id}.json'), 'w') as file:
+            with open(os.path.join(path_id, f'{mode_names[self.mode]}{big_id}.json'), 'w') as file:
                 file.write(str(calibration))
         elif self.mode == Mode.CHECK:
             self.gui.text.after_cancel(clear_id)
             calibration = list(self.calibrations.values())[-1]
             undistorted = calibration.undistort(self.image)
-            cv2.imwrite(os.path.join(path_id, f'{big_id}-{little_id}-undistorted.png'), undistorted)
+            cv2.imwrite(os.path.join(path_id, f'{mode_names[self.mode]}{big_id}-{little_id}.undistorted.png'), undistorted)
             error = equidistant(undistorted)
             if error is None:
                 text = 'Mueve el patron de 36x54 para poder detectarlo.'

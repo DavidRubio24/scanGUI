@@ -144,10 +144,8 @@ class State:
         while os.path.isfile(filepath):
             filepath = os.path.join(path_id, f'{mode_names[self.mode]}{"0" * (4 - len(big_id))}{big_id}-{little_id}({i}).{extension}')
             i += 1
-        # self.text = f"Capturado en:\n{path_id}\n{filepath[len(path_id):]}" + '\0' * 30
         self.gui.text.configure(text=f"Capturado en:\n{path_id}\n{filepath[len(path_id):]}", font=('Arial', 9, 'bold'))
-        if not big_id or big_id == '0' * len(big_id):
-            self.gui.text.configure(foreground='red')
+        self.gui.text.configure(foreground='red' if '00000'.startswith(big_id) else 'black')
         self.gui.text_time_to_live = time.time() + 2
         self.gui.text.update()
         self.gui.text.after(100, self.gui.unbold_text)

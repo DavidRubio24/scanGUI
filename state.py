@@ -100,8 +100,8 @@ class State:
         if mode == Mode.CAPTURE:
             big_id = ''
             self.gui.capturar.grid_forget()
-            self.gui.m1.grid(column=1, row=4, sticky='SE')
-            self.gui.m2.grid(column=1, row=4, sticky='SW')
+            self.gui.m1.grid(column=1, row=4, sticky='SW')
+            self.gui.m2.grid(column=1, row=4, sticky='SE')
         else:
             big_id = time.strftime("%Y%m%d%H%M%S", time.localtime())
             self.gui.capturar.grid(column=0, row=4, sticky='SW')

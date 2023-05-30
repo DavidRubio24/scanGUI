@@ -96,10 +96,10 @@ class GUI:
         # Capture buttons
         self.capturar = ttk.Button(path_frame, text="Capturar", command=state.capture_action)
         # self.capturar.grid(column=0, row=4, sticky='SE')
-        self.m2 = ttk.Button(path_frame, text="M2", command=lambda: state.capture_action('M2'))
-        self.m2.grid(column=1, row=4, sticky='SE')
         self.m1 = ttk.Button(path_frame, text="M1", command=lambda: state.capture_action('M1'))
         self.m1.grid(column=1, row=4, sticky='SW')
+        self.m2 = ttk.Button(path_frame, text="M2", command=lambda: state.capture_action('M2'))
+        self.m2.grid(column=1, row=4, sticky='SE')
         
         # Add text below the buttons
         self.text = ttk.Label(path_frame, text='')

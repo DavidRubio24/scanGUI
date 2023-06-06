@@ -173,7 +173,8 @@ class GUI:
             elif self.state.mode == Mode.CALIBRATE:
                 self.text.configure(text='Captura el patrón de calibración de 7x10.')
             elif self.state.mode == Mode.CHECK:
-                self.text.configure(text='Captura el patrón de comprobación de 36x54.')
+                self.text.configure(text='Captura el patrón de comprobación de {}x{}.'
+                                    .format(*config.dimensiones_patron_comprobacion))
             self.text.update()
     
     def clear_properties_text(self):

@@ -6,6 +6,7 @@ import cv2
 import numpy as np
 from threading import Thread
 
+import config
 import utils
 from calibrate import Calibration, equidistant
 from hardware import Lights
@@ -125,7 +126,8 @@ class State:
 
     def check(self):
         self.change_mode(Mode.CHECK)
-        self.gui.text.configure(text='Captura el patrón de comprobación de 36x54.')
+        self.gui.text.configure(text='Captura el patrón de comprobación de {}x{}.'
+                                .format(*config.dimensiones_patron_comprobacion))
 
     def capture_action(self, capture_name=None):
         """Save the image to the destination directory."""
@@ -171,9 +173,9 @@ class State:
             calibration = list(self.calibrations.values())[-1]
             undistorted = calibration.undistort(self.image)
             cv2.imwrite(os.path.join(path_id, f'{mode_names[self.mode]}{big_id}-{little_id}.undistorted.png'), undistorted)
-            error = equidistant(undistorted)
+            error = equidistant(undistorted, pattern_size=config.dimensiones_patron_comprobacion)
             if error is None:
-                text = 'Mueve el patron de 36x54 para poder detectarlo.'
+                text = 'Mueve el patron de {}x{} para poder detectarlo.'.format(*config.dimensiones_patron_comprobacion)
             else:
                 text = f'Error: {error:.2f} mm'
             self.gui.text.configure(text=text)

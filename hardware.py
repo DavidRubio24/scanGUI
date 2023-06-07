@@ -1,7 +1,8 @@
+import sys
+
 import cv2
 import serial
 import serial.tools.list_ports
-import numpy as np
 
 import config
 
@@ -47,7 +48,10 @@ def lights(port='COM3', baudrate=57600, timeout=.1):
     ports = serial.tools.list_ports.comports()
     if port in [p.device for p in ports]:
         return Lights(port, baudrate, timeout)
-    
+
+    if sys.stdout is None:
+        return DummyLights()
+
     print(f'Lights port {port} not found.\nPorts available:')
     for port in sorted(ports, key=lambda port: port.device):
         print('    · ', port.device, ': ', port.description, sep='')
@@ -91,23 +95,3 @@ def camera(camera_number=0, resolution=(4208, 3120), fourcc='UYVY', exposure=-5,
         cap.set(cv2.CAP_PROP_SETTINGS, 0)
 
     return cap
-
-
-def warm_up(cap, extra_frames=0):
-    """For some reason we need to ask the camera for a few frames bfore it actually starts working."""  # Best camera ever.
-    success, image = cap.read()
-    i = 1
-    cR_ = '\x1B[0;31m'
-    _c = '\x1B[0m'
-    while not success or np.all(image == 0):
-        print(f'{i: >2}' if success else cR_ + f'{i: >2}' + _c, 'warm-up frames taken.', end='\r')
-        success, image = cap.read()
-        i += 1
-    if i > 1: print()
-
-    for j in range(extra_frames):
-        success, image = cap.read()
-        print(f'{j+1: >2}' if success else cR_ + f'{j+1: >2}' + _c, ' extra  frames taken.', end='\r')
-    if extra_frames > 0: print()
-
-    return success, image

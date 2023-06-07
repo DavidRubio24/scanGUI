@@ -14,10 +14,10 @@ python -m pip install numpy opencv-python pyserial Pillow
 
 ## Uso
 
-El programa se abre ejecutando el archivo scanGUI.py. Normalmente basta con hacer doble click en el archivo,
+El programa se abre ejecutando el archivo scanGUI.pyw. Normalmente basta con hacer doble click en el archivo,
 pero si se abre como un archivo de texto hay que "Abrir con" "Python".
 
-Junto a la ventana del programa se abre otra con fondo negro que no hay que cerrar (pues se cerrarán ambas).
+Si junto a la ventana del programa se abre una consola, no hay que cerrarla (pues se cerrará todo).
 
 Al abrir y cerrar el programa se deberian encender y apagar las luces automáticamente (a menos que se cierre abruptamente).
 En el programa hay botones para encender y apagar las luces.

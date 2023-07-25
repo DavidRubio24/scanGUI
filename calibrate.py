@@ -15,6 +15,7 @@ EXTRINSIC_PARAMETERS = np.array([1, 0, 0, -.1])  # About .3 of eye fish and -.00
 
 
 class Calibration:
+    """Contains the parameters needed to undistort an image and has utilities to calibrate the camera."""
     def __init__(self):
         self.points = []
         self.pattern_sizes = []
@@ -25,7 +26,8 @@ class Calibration:
         self.dist_coeffs = EXTRINSIC_PARAMETERS
         self.camera_matrix = INTRINSIC_MATRIX
 
-    def add_points(self, image, pattern_size=(55, 37), window_size=25) -> bool:
+    def add_points(self, image, pattern_size=(6, 9), window_size=25) -> bool:
+        """Add the points of a small checkerboard to the calibration."""
         image = utils.open_image(image)
         points = get_checker(image, pattern_size, window_size)
         if not len(points):
@@ -37,6 +39,7 @@ class Calibration:
         return True
 
     def calibrate(self, side=1):
+        """Get the calibration params from the added points."""
         if not self.points:
             return None, self.camera_matrix, self.dist_coeffs, None, None
         points3d = []

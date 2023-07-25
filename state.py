@@ -22,9 +22,9 @@ class Mode(Enum):
     CHECK = 2
 
 
-mode_names = {Mode.CAPTURE: 'TEN_',
-              Mode.CALIBRATE: 'CALIBRATE_',
-              Mode.CHECK: 'CHECK_'}
+mode_prefix = {Mode.CAPTURE: 'TEN_',
+               Mode.CALIBRATE: 'CALIBRATE_',
+               Mode.CHECK: 'CHECK_'}
 
 
 class State:
@@ -62,7 +62,7 @@ class State:
         time.sleep(5)
         image_buffer = None  # Use always the same buffer to avoid memory allocation.
         while True:
-            success, image_buffer = self.cam.read(image_buffer)
+            success, image_buffer = self.cam.read(image_buffer)  # This waits for a new image.
             if not success or image_buffer is None or not np.any(image_buffer):
                 time.sleep(.2)
                 continue
@@ -97,22 +97,24 @@ class State:
         return cv2.cvtColor(image, cv2.COLOR_BGR2RGB) if rgb else image
 
     def change_mode(self, mode: Mode):
-        self.gui.text.configure(foreground='black')
+        self.gui.text.configure(foreground='black')  # Make sure is not red.
         if mode == Mode.CAPTURE:
             big_id = ''
+            # Show M1 and M2 buttons and hide the capture button.
             self.gui.capturar.grid_forget()
             self.gui.m1.grid(column=1, row=4, sticky='SW')
             self.gui.m2.grid(column=1, row=4, sticky='SE')
         else:
             big_id = time.strftime("%Y%m%d%H%M%S", time.localtime())
+            # Show the capture button and hide M1 and M2 buttons.
             self.gui.capturar.grid(column=0, row=4, sticky='SW')
             self.gui.m1.grid_forget()
             self.gui.m2.grid_forget()
-        self.gui.prefix.set('Serie: ' + mode_names[mode])
+        self.gui.prefix.set('Serie: ' + mode_prefix[mode])
         self.gui.big_id.set(big_id)
         self.gui.little_id.set('M1' if mode == Mode.CAPTURE else '0')
         self.mode = mode
-        self.gui.set_mode(mode.value)
+        self.gui.set_mode(mode.value)  # Color the buttons appropriately.
         self.gui.update()
         self.gui.text_time_to_live = float('inf')
 
@@ -129,25 +131,30 @@ class State:
         self.gui.text.configure(text='Captura el patrón de comprobación de {}x{}.'
                                 .format(*config.dimensiones_patron_comprobacion))
 
-    def capture_action(self, capture_name=None):
+    def capture_action(self, capture_name: str = None):
         """Save the image to the destination directory."""
         path_id = self.gui.path_id.get()
         big_id = self.gui.big_id.get()
-        # Remove the mode prefix if the user has inputed it.
-        for prefix in mode_names.values():
+        
+        # Remove the mode prefix if the user has (reduntdantly) typed it.
+        for prefix in mode_prefix.values():
             if big_id.upper().startswith(prefix):
                 big_id = big_id[len(prefix):]
                 break
+        
+        # Use the name of the button the user pressed or the contents of the little_id if the user pressed enter.
         little_id = capture_name if isinstance(capture_name, str) else self.gui.little_id.get()
         if not os.path.isdir(path_id): os.mkdir(path_id)
         extension = 'png' if self.mode != Mode.CAPTURE else time.strftime("%Y%m%d", time.localtime()) + '.png'
-        filepath = os.path.join(path_id, f'{mode_names[self.mode]}{"0" * (4 - len(big_id))}{big_id}-{little_id}.{extension}')
+        filepath = os.path.join(path_id, f'{mode_prefix[self.mode]}{"0" * (4 - len(big_id))}{big_id}-{little_id}.{extension}')
+        
+        # If there's already a file with the same name, add a number at the end with parenthesis.
         i = 2
         while os.path.isfile(filepath):
-            filepath = os.path.join(path_id, f'{mode_names[self.mode]}{"0" * (4 - len(big_id))}{big_id}-{little_id}({i}).{extension}')
+            filepath = os.path.join(path_id, f'{mode_prefix[self.mode]}{"0" * (4 - len(big_id))}{big_id}-{little_id}({i}).{extension}')
             i += 1
         self.gui.text.configure(text=f"Capturado en:\n{path_id}\n{filepath[len(path_id):]}", font=('Arial', 9, 'bold'))
-        self.gui.text.configure(foreground='red' if '00000'.startswith(big_id) else 'black')
+        self.gui.text.configure(foreground='red' if '00000'.startswith(big_id) else 'black')  # Red if the ID is empty or zeros.
         self.gui.text_time_to_live = time.time() + 2
         self.gui.text.update()
         self.gui.text.after(100, self.gui.unbold_text)
@@ -155,7 +162,7 @@ class State:
         Thread(target=lambda: cv2.imwrite(filepath, self.image)).start()
 
         if isinstance(capture_name, str):
-            self.gui.little_id.set(capture_name)
+            self.gui.little_id.set(capture_name)  # If the user pressed a button, set the little_id to the button's name.
         elif self.mode != Mode.CAPTURE:
             self.gui.little_id.set(utils.increase_name(little_id))
 
@@ -166,13 +173,16 @@ class State:
             if not success:
                 return
             calibration.calibrate()
-            with open(os.path.join(path_id, f'{mode_names[self.mode]}{big_id}.json'), 'w') as file:
+            with open(os.path.join(path_id, f'{mode_prefix[self.mode]}{big_id}.json'), 'w') as file:
                 file.write(str(calibration))
         elif self.mode == Mode.CHECK:
+            # If we write text, it's going to be deleted by the scheduled self.gui.clear_text function.
+            # Cancel that function before writing.
             self.gui.text.after_cancel(clear_id)
-            calibration = list(self.calibrations.values())[-1]
+            
+            calibration = list(self.calibrations.values())[-1]  # Take the last (most updated) calibration.
             undistorted = calibration.undistort(self.image)
-            cv2.imwrite(os.path.join(path_id, f'{mode_names[self.mode]}{big_id}-{little_id}.undistorted.png'), undistorted)
+            cv2.imwrite(os.path.join(path_id, f'{mode_prefix[self.mode]}{big_id}-{little_id}.undistorted.png'), undistorted)
             error = equidistant(undistorted, pattern_size=config.dimensiones_patron_comprobacion)
             if error is None:
                 text = 'Mueve el patron de {}x{} para poder detectarlo.'.format(*config.dimensiones_patron_comprobacion)

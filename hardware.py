@@ -19,7 +19,7 @@ class Lights:
         intensity = int.to_bytes(intensity, 1, 'little') if isinstance(intensity, int) else intensity
         duration  = int.to_bytes(duration,  1, 'little') if isinstance(duration,  int) else duration
 
-        self.arduino.write(b'I' + intensity + duration + b' ')
+        self.arduino.write(b'I' + intensity + duration + b' ')  # This is the format our arduinos expects.
         self.turned_on = True
 
     def off(self):
@@ -49,6 +49,7 @@ def lights(port='COM3', baudrate=57600, timeout=.1):
     if port in [p.device for p in ports]:
         return Lights(port, baudrate, timeout)
 
+    # Avoid error when printing.
     if sys.stdout is None:
         return DummyLights()
 
@@ -60,7 +61,7 @@ def lights(port='COM3', baudrate=57600, timeout=.1):
     port = input('... or press <Enter> for no lights): ')
     
     if port.strip():
-        return lights(port, baudrate, timeout)
+        return lights(port, baudrate, timeout)  # Try again recursively.
     print('Not using lights.')
     return DummyLights()
 

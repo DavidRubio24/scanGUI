@@ -17,5 +17,5 @@ directorio_destino = 'D:/HANDSCANNER_DATA/'
 balance_de_blancos = 5050
 
 # Tamaño del patrón de comprobación.
-dimensiones_patron_comprobacion = (49, 31)  # Nuevo (un poco más pequeño para que lo detecte)
+dimensiones_patron_comprobacion = (49, 31)  # Patrón nuevo (un poco más pequeño para que lo detecte)
 # dimensiones_patron_comprobacion = (53, 35)

@@ -59,7 +59,7 @@ class GUI:
         self.little_id = tk.StringVar(value='M1')
         
         self.turn = 0
-        """Turn to change intensity of lights. We dont want to change it to 1 and 10 while writting 100."""
+        """Turn to change intensity of lights. We don't want to change it to 1 and 10 while writting 100."""
         
         def update_intensity(intensity, my_turn):
             # Only update the intensity if this is the last turn assigned.

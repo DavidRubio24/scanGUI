@@ -1,3 +1,6 @@
+Autor: davidrubio.24@gmail.com
+(No dudes en contactarme).
+
 # scanGUI
 
 Este programa es una interfaz simple para controlar las luces y la cámara del escaner de manos.
@@ -27,7 +30,7 @@ entonces hay que cambiar el archivo de configuración "config.py" abriéndolo co
 Hay que probar con otros números (seguramente se haya conectado a otro USB).
 
 En el modo Nuevo usuario al capturar con los botones "M1" y "M2" el contenido del campo captura se ignorará y se usará "M1" y "M2" en su lugar.
-Si se le da a <Enter> se usa el contenido del campo captura (que cambia a "M1" o "M2" cuando se captura con los botones).
+Si se le da a Enter se usa el contenido del campo captura (que cambia a "M1" o "M2" cuando se captura con los botones).
 
 Las capturas se guardan en la carpeta indicada. El nombre estará formado por la serie y captura.
 Todo ello se puede modificar a voluntad.
@@ -41,9 +44,9 @@ Hay tres modos:
 Si lo detecta, se actualizan los parámetros de calibración y se guardan en un archivo .json.
 Cuando no lo detecta puede tardar bastante. Las series se llaman CALIB_ y la fecha y hora actual.
 Por defecto hay una calibración bastante buena.
-- Comprobar calibración: Intenta detectar el patrón de calibración de 36x54. Tarda unos segundos.
+- Comprobar calibración: Intenta detectar el patrón de calibración de 49x31. Tarda unos segundos.
 Si lo detecta se muestra el error en milímetros obtenido tras aplicar la última calibración.
-Aquí el error mide cuanto se desvían las esquinas del patrón de una situación ideal en la que estén equiespaciadas.
+Aquí el error mide cuanto se desvían todas las esquinas del patrón de una situación ideal en la que estén equiespaciadas.
 
 Al cambiar el modo se cambia la serie (aumentando el número de 4 cifras o actualizando la fecha y hora)
 y se resetea el número de captura.
